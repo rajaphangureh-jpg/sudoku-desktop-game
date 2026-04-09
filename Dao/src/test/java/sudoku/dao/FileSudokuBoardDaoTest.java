@@ -4,9 +4,13 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+
+import sudoku.dao.exceptions.SudokuReadException;
 import sudoku.dao.factories.SudokuBoardDaoFactory;
 import sudoku.dao.interfaces.Dao;
 import sudoku.model.exceptions.FillingBoardSudokuException;
@@ -68,6 +72,26 @@ public class FileSudokuBoardDaoTest {
             Assertions.fail();
         }
 
+    }
+
+    @Test
+    public void testSudokuReadException() {
+        java.io.File testDir = new java.io.File(TEST_DIRECTORY);
+        testDir.mkdirs();
+        java.io.File garboFile = new java.io.File(testDir, "garbo.sudoku");
+        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(garboFile)) {
+            fos.write("Im writing a bunch a mumbo jumbo so the file reader knows that this is not a sudoku format"
+                    .getBytes()); // prettier puts this on its own line I cant change it :(
+        } catch (IOException IE) {
+            IE.printStackTrace();
+        }
+        try (Dao<SudokuBoard> dao = SudokuBoardDaoFactory.createSudokuBoardDao(TEST_DIRECTORY)) {
+            assertThrows(SudokuReadException.class, () -> {
+                dao.read("garbo");
+            });
+        } catch (Exception e) {
+            Assertions.fail();
+        }
     }
 
 }
